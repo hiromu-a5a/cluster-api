@@ -84,6 +84,8 @@ type AlphaClient interface {
 	RolloutResume(options RolloutResumeOptions) error
 	// RolloutUndo provides rollout rollback of cluster-api resources
 	RolloutUndo(options RolloutUndoOptions) error
+	// RolloutHistory provides rollout history of cluster-api resources
+	RolloutHistory(options RolloutHistoryOptions) error
 	// TopologyPlan dry runs the topology reconciler
 	TopologyPlan(options TopologyPlanOptions) (*TopologyPlanOutput, error)
 }

@@ -85,6 +85,23 @@ type RolloutUndoOptions struct {
 	ToRevision int64
 }
 
+// RolloutHistoryOptions carries the options supported by RolloutHistory.
+type RolloutHistoryOptions struct {
+	// Kubeconfig defines the kubeconfig to use for accessing the management cluster. If empty,
+	// default rules for kubeconfig discovery will be used.
+	Kubeconfig Kubeconfig
+
+	// Resources for the rollout command
+	Resources []string
+
+	// Namespace where the resource(s) live. If unspecified, the namespace name will be inferred
+	// from the current configuration.
+	Namespace string
+
+	// Revision number to view details
+	Revision int64
+}
+
 func (c *clusterctlClient) RolloutRestart(options RolloutRestartOptions) error {
 	clusterClient, err := c.clusterClientFactory(ClusterClientFactoryInput{Kubeconfig: options.Kubeconfig})
 	if err != nil {
@@ -147,6 +164,23 @@ func (c *clusterctlClient) RolloutUndo(options RolloutUndoOptions) error {
 	}
 	for _, ref := range objRefs {
 		if err := c.alphaClient.Rollout().ObjectRollbacker(clusterClient.Proxy(), ref, options.ToRevision); err != nil {
+			return err
+		}
+	}
+	return nil
+}
+
+func (c *clusterctlClient) RolloutHistory(options RolloutHistoryOptions) error {
+	clusterClient, err := c.clusterClientFactory(ClusterClientFactoryInput{Kubeconfig: options.Kubeconfig})
+	if err != nil {
+		return err
+	}
+	objRefs, err := getObjectRefs(clusterClient, options.Namespace, options.Resources)
+	if err != nil {
+		return err
+	}
+	for _, ref := range objRefs {
+		if err := c.alphaClient.Rollout().ObjectViewer(clusterClient.Proxy(), ref, options.Revision); err != nil {
 			return err
 		}
 	}

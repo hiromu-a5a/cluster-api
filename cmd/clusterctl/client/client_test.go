@@ -145,6 +145,10 @@ func (f fakeClient) RolloutUndo(options RolloutUndoOptions) error {
 	return f.internalClient.RolloutUndo(options)
 }
 
+func (f fakeClient) RolloutHistory(options RolloutHistoryOptions) error {
+	return f.internalClient.RolloutHistory(options)
+}
+
 func (f fakeClient) TopologyPlan(options TopologyPlanOptions) (*cluster.TopologyPlanOutput, error) {
 	return f.internalClient.TopologyPlan(options)
 }
