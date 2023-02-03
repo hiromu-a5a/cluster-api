@@ -20,8 +20,9 @@ import (
 	"fmt"
 	"os"
 	"sort"
-	"text/tabwriter"
+	"strconv"
 
+	"github.com/olekukonko/tablewriter"
 	"github.com/pkg/errors"
 	"gopkg.in/yaml.v2"
 	corev1 "k8s.io/api/core/v1"
@@ -44,7 +45,7 @@ func (r *rollout) ObjectViewer(proxy cluster.Proxy, ref corev1.ObjectReference, 
 			return err
 		}
 	default:
-		return errors.Errorf("invalid resource type %q, valid values are %v", ref.Kind, validResourceTypes)
+		return errors.Errorf("invalid resource type %q, valid values are %v", ref.Kind, validHistoryResourceTypes)
 	}
 	return nil
 }
@@ -94,15 +95,27 @@ func viewMachineDeployment(proxy cluster.Proxy, d *clusterv1.MachineDeployment, 
 	sort.Slice(revisions, func(i, j int) bool { return revisions[i] < revisions[j] })
 
 	// Output the revisionToChangeCause map
-	writer := new(tabwriter.Writer)
-	writer.Init(os.Stdout, 0, 8, 2, ' ', 0)
-	fmt.Fprintf(writer, "REVISION\tCHANGE-CAUSE\n")
+	table := tablewriter.NewWriter(os.Stdout)
+	table.SetHeader([]string{"REVISION", "CHANGE-CAUSE"})
+	table.SetHeaderAlignment(tablewriter.ALIGN_LEFT)
+	table.SetAlignment(tablewriter.ALIGN_LEFT)
+	table.SetCenterSeparator("")
+	table.SetColumnSeparator("")
+	table.SetRowSeparator("")
+	table.SetHeaderLine(false)
+	table.SetBorder(false)
+
 	for _, r := range revisions {
 		changeCause := historyInfo[r]
 		if changeCause == "" {
 			changeCause = "<none>"
 		}
-		fmt.Fprintf(writer, "%d\t%s\n", r, changeCause)
+		table.Append([]string{
+			strconv.FormatInt(r, 10),
+			changeCause,
+		})
 	}
-	return writer.Flush()
+	table.Render()
+
+	return nil
 }
