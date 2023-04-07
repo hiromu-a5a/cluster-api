@@ -96,6 +96,10 @@ func (r *Reconciler) SetupWithManager(ctx context.Context, mgr ctrl.Manager, opt
 	if err != nil {
 		return err
 	}
+	msToMachines, err := util.MachineSetToObjectsMapper(mgr.GetClient(), &clusterv1.MachineList{}, mgr.GetScheme())
+	if err != nil {
+		return err
+	}
 
 	if r.nodeDeletionRetryTimeout.Nanoseconds() == 0 {
 		r.nodeDeletionRetryTimeout = 10 * time.Second
@@ -118,6 +122,10 @@ func (r *Reconciler) SetupWithManager(ctx context.Context, mgr ctrl.Manager, opt
 					predicates.ResourceHasFilterLabel(ctrl.LoggerFrom(ctx), r.WatchFilterValue),
 				),
 			)).
+		Watches(
+			&source.Kind{Type: &clusterv1.MachineSet{}},
+			handler.EnqueueRequestsFromMapFunc(msToMachines),
+		).
 		Build(r)
 	if err != nil {
 		return errors.Wrap(err, "failed setting up with a controller manager")
